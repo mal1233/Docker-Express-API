@@ -1,0 +1,41 @@
+services:
+  backend:
+    build: .
+    container_name: backend-container
+    command: sh -c "npx prisma generate && npx prisma migrate deploy && npm run dev"
+    ports:
+      - "4000:3000"
+    environment:
+      PORT: "3000"
+      JWT_SECRET: supersecret
+
+      DATABASE_URL: postgresql://app_user:supersecretpassword@db:5432/app_db
+
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_USER: app_user
+      DB_PASSWORD: supersecretpassword
+      DB_NAME: app_db
+    volumes:
+      - .:/app
+      - /app/node_modules
+    depends_on:
+      db:
+        condition: service_started
+    restart: unless-stopped
+
+  db:
+    image: postgres:16-alpine
+    container_name: postgres-container
+    environment:
+      POSTGRES_USER: app_user
+      POSTGRES_PASSWORD: supersecretpassword
+      POSTGRES_DB: app_db
+    ports:
+      - "5678:5432"   # host access (pgAdmin / psql)
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  postgres-data:
